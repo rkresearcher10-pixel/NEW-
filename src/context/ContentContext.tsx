@@ -350,7 +350,9 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return { ...DEFAULT_CONTENT, ...JSON.parse(saved) };
+        const savedContent = JSON.parse(saved);
+        savedContent.heroSubtitle = '';
+        return { ...DEFAULT_CONTENT, ...savedContent };
       }
     } catch (e) {
       console.error('Failed to parse saved content', e);
@@ -377,6 +379,9 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [content]);
 
   const updateContent = (newPartial: Partial<AppContent>) => {
+    if ('heroSubtitle' in newPartial) {
+      newPartial.heroSubtitle = newPartial.heroSubtitle ?? '';
+    }
     setContent((prev) => ({
       ...prev,
       ...newPartial,
