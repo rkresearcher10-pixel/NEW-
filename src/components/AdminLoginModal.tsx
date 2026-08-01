@@ -78,20 +78,20 @@ export const AdminLoginModal: React.FC = () => {
               </motion.div>
             )}
 
-            {/* Email Field */}
+            {/* Admin ID Field */}
             <div>
               <label className="block text-xs font-mono font-bold text-neutral-300 mb-1.5 flex items-center justify-between">
-                <span>Admin Email ID</span>
+                <span>Admin ID</span>
                 <span className="text-[10px] text-pink-400 font-normal">Required</span>
               </label>
               <div className="relative flex items-center">
                 <Mail className="w-4 h-4 text-neutral-400 absolute left-3.5 pointer-events-none" />
                 <input
-                  type="email"
+                  type="text"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="RKresearcher@gmail.com"
+                  placeholder="rk109"
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-neutral-950 border border-white/10 text-white text-sm focus:border-pink-500 focus:outline-none placeholder:text-neutral-600 font-mono"
                 />
               </div>

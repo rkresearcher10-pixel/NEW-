@@ -389,7 +389,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const login = (email: string, pass: string): boolean => {
-    if (email.trim().toLowerCase() === 'rkresearcher@gmail.com' && pass === 'rkme') {
+    if (email.trim().toLowerCase() === 'rk109' && pass === 'rkme13456') {
       setIsAuthenticated(true);
       try {
         sessionStorage.setItem('rk_admin_auth', 'true');
