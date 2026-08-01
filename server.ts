@@ -8,7 +8,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 const mongoUri = process.env.MONGODB_URI;
@@ -25,6 +25,7 @@ const client = new MongoClient(mongoUri, {
 });
 
 let dbClient: MongoClient;
+const contentSubscribers = new Set<(payload: string) => void>();
 
 async function connectDB() {
   if (!dbClient) {
@@ -34,6 +35,17 @@ async function connectDB() {
   }
   return dbClient;
 }
+
+function broadcastContentUpdate(payload: unknown) {
+  const message = JSON.stringify(payload);
+  for (const send of contentSubscribers) {
+    send(message);
+  }
+}
+
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', service: 'hyper3d-backend' });
+});
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
@@ -50,11 +62,31 @@ app.get('/api/content', async (req, res) => {
   }
 });
 
+app.get('/api/content/stream', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  const send = (payload: string) => {
+    res.write(`data: ${payload}\n\n`);
+  };
+
+  contentSubscribers.add(send);
+  res.write(': connected\n\n');
+
+  req.on('close', () => {
+    contentSubscribers.delete(send);
+  });
+});
+
 app.post('/api/content', async (req, res) => {
   try {
     const db = (await connectDB()).db(process.env.MONGODB_DB || 'hyper3d');
     const payload = req.body;
     await db.collection('content').updateOne({}, { $set: payload }, { upsert: true });
+    const updatedDoc = await db.collection('content').findOne({});
+    broadcastContentUpdate(updatedDoc || {});
     res.json({ success: true });
   } catch (error) {
     console.error(error);

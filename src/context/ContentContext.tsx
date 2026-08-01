@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import defaultLogo from '../../assets/bfaaf854-f802-443f-b8a3-cf7e50c2499e.jpg';
+
+const defaultLogo = '';
 
 export interface ResearchTypeItem {
   id: string;
@@ -78,7 +79,7 @@ export const DEFAULT_CONTENT: AppContent = {
   trialBadgeText: '7-Days Trial',
   freeBadgeText: 'Free',
   heroTitle: 'SIMPLIFYING YOUR RESEARCH JOURNEY',
-  heroSubtitle: '',
+  heroSubtitle: 'Turn complex workflows into streamlined insights in seconds with intuitive interactive tools.',
   heroButtonText: 'Explore Now',
   heroPill1: '1 STOP SOLUTIONS',
   heroPill2: 'Making Your Research Valuable',
@@ -328,6 +329,7 @@ export const DEFAULT_CONTENT: AppContent = {
 };
 
 const STORAGE_KEY = 'custom_website_content_v1';
+const API_BASE_URL = String((import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
 interface ContentContextType {
   content: AppContent;
@@ -350,9 +352,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        const savedContent = JSON.parse(saved);
-        savedContent.heroSubtitle = '';
-        return { ...DEFAULT_CONTENT, ...savedContent };
+        return { ...DEFAULT_CONTENT, ...JSON.parse(saved) };
       }
     } catch (e) {
       console.error('Failed to parse saved content', e);
@@ -378,19 +378,102 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [content]);
 
-  const updateContent = (newPartial: Partial<AppContent>) => {
-    if ('heroSubtitle' in newPartial) {
-      newPartial.heroSubtitle = newPartial.heroSubtitle ?? '';
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadRemoteContent = async () => {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      const fallbackContent = saved ? { ...DEFAULT_CONTENT, ...JSON.parse(saved) } : DEFAULT_CONTENT;
+
+      if (!API_BASE_URL) {
+        if (isMounted) {
+          setContent(fallbackContent);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/content`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const remoteContent = await response.json();
+        if (isMounted) {
+          setContent({ ...DEFAULT_CONTENT, ...fallbackContent, ...remoteContent });
+        }
+      } catch (error) {
+        console.error('Failed to load content from backend', error);
+        if (isMounted) {
+          setContent(fallbackContent);
+        }
+      }
+    };
+
+    void loadRemoteContent();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!API_BASE_URL) return;
+
+    const eventSource = new EventSource(`${API_BASE_URL}/api/content/stream`);
+
+    eventSource.onmessage = (event) => {
+      try {
+        const remoteContent = JSON.parse(event.data);
+        setContent((prev) => ({
+          ...DEFAULT_CONTENT,
+          ...prev,
+          ...remoteContent,
+        }));
+      } catch (error) {
+        console.error('Failed to parse live content update', error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('Live content stream disconnected', error);
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
+
+  const persistContent = async (nextContent: AppContent) => {
+    if (!API_BASE_URL) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/api/content`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nextContent),
+      });
+    } catch (error) {
+      console.error('Failed to sync content to backend', error);
     }
-    setContent((prev) => ({
-      ...prev,
-      ...newPartial,
-    }));
+  };
+
+  const updateContent = (newPartial: Partial<AppContent>) => {
+    setContent((prev) => {
+      const nextContent = {
+        ...prev,
+        ...newPartial,
+      };
+      void persistContent(nextContent);
+      return nextContent;
+    });
   };
 
   const resetToDefault = () => {
-    setContent(DEFAULT_CONTENT);
+    const nextContent = DEFAULT_CONTENT;
+    setContent(nextContent);
     localStorage.removeItem(STORAGE_KEY);
+    void persistContent(nextContent);
   };
 
   const login = (email: string, pass: string): boolean => {
