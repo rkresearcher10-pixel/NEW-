@@ -1,0 +1,6 @@
+{
+  "name": "Hyper3D AI - 3D Model Generator",
+  "description": "Create high-quality 3D models using AI with real-time 3D viewport, text-to-3D, image-to-3D, and interactive model generation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
