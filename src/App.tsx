@@ -48,7 +48,7 @@ function MainAppContent() {
               <img
                 src={content.logoUrl}
                 alt={content.brandName}
-                className="h-10 w-auto max-w-[160px] sm:h-12 object-contain rounded-xl border border-pink-500/30 p-1 bg-neutral-900 shadow-md shadow-pink-500/10"
+                className="max-w-[160px] max-h-12 w-auto h-auto object-contain"
               />
             ) : (
               <div className="p-2 rounded-xl bg-gradient-to-tr from-pink-500 via-purple-500 to-cyan-500 text-white shadow-lg shadow-pink-500/20">
@@ -255,9 +255,11 @@ function MainAppContent() {
             )}
           </div>
 
-          <p className="mt-6 text-base sm:text-lg md:text-xl text-neutral-300 max-w-2xl leading-relaxed">
-            {content.heroSubtitle}
-          </p>
+          {content.heroSubtitle && (
+            <p className="mt-6 text-base sm:text-lg md:text-xl text-neutral-300 max-w-2xl leading-relaxed">
+              {content.heroSubtitle}
+            </p>
+          )}
 
           <div className="mt-8 flex items-center justify-center">
             <motion.button

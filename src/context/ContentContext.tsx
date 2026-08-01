@@ -78,7 +78,7 @@ export const DEFAULT_CONTENT: AppContent = {
   trialBadgeText: '7-Days Trial',
   freeBadgeText: 'Free',
   heroTitle: 'SIMPLIFYING YOUR RESEARCH JOURNEY',
-  heroSubtitle: 'Turn complex workflows into streamlined insights in seconds with intuitive interactive tools.',
+  heroSubtitle: '',
   heroButtonText: 'Explore Now',
   heroPill1: '1 STOP SOLUTIONS',
   heroPill2: 'Making Your Research Valuable',
